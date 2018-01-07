@@ -55,7 +55,9 @@ def read_data():
 
 
 def error(y_train, predict):
-    print("1/2 Mean squared error: %.6f" % (mean_squared_error(y_train, predict) / 2))
+    result = mean_squared_error(y_train, predict) / 2
+    print("1/2 Mean squared error: %.6f" % result)
+    return result
 
 
 def save(result, name):
