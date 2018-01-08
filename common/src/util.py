@@ -46,12 +46,22 @@ def get_url():
 
 
 def read_data():
-    root_dir, train_url, feature_url = get_url()
+    train = pd.read_csv("../data/raw/d_train.csv")
+    test = pd.read_csv("../data/raw/d_test_A.csv")
 
-    train = pd.read_csv(root_dir + 'd_train_20180102.csv', encoding='gb2312')
-    test_A = pd.read_csv(root_dir + 'd_test_A_20180102.csv', encoding='gb2312')
-    sample = pd.read_csv(root_dir + 'd_sample_20180102.csv', encoding='gb2312')
-    return train, test_A, sample
+    test_id = test.pop("id")
+    train_id = train.pop("id")
+
+    total_ID = pd.concat([train_id, test_id])
+
+    target = train.pop("血糖")
+    total = pd.concat([train, test])
+    return total, target, train_id, test_id, total_ID
+
+
+def save_data(data, url):
+    for d, u in zip(data, url):
+        d.to_csv(u, index=False, encoding="utf8")
 
 
 def error(y_train, predict):
