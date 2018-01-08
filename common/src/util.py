@@ -73,7 +73,7 @@ def error(y_train, predict):
 def save(result, name):
     now = datetime.datetime.now()
     my_time = now.strftime('%m_%d_%H_%M')
-    result.to_csv("result/" + name + '_' + my_time + '.csv', header=None, index=False, encoding="utf-8")
+    result.to_csv("../result/" + name + '_' + my_time + '.csv', header=None, index=False, encoding="utf-8")
 
 
 if __name__ == '__main__':
