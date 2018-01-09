@@ -1,5 +1,7 @@
 from sys import path
+
 path.append('../')
+from tl.Feature import Feature
 import pandas as pd
 from tl.util import read_data, save, plt_encoding_error, error, normal
 import matplotlib.pyplot as plt
@@ -11,36 +13,13 @@ num_test_A = len(test_A)
 
 train_m = pd.concat([train, test_A])
 
-train_m['甘油三酯_normal'] = train_m['甘油三酯'].apply(normal, args=(1.69,))
-train_m['尿素_normal'] = train_m['尿素'].apply(normal, args=(7.1,))
-train_m['尿酸_normal'] = train_m.apply(lambda x: 0 if (x['性别']=='女' and x['尿酸']>357) or (x['性别']=='男' and x['尿酸']>416) else 1, axis=1)
-train_m['*天门冬氨酸氨基转换酶_normal'] = train_m['*天门冬氨酸氨基转换酶'].apply(normal, args=(40,))
-
-# #添加统计量
-# #columns = total.columns.tolist()
-# columns = ["年龄","甘油三酯","红细胞平均体积","尿素","尿酸","*碱性磷酸酶","红细胞平均血红蛋白浓度","*天门冬氨酸氨基转换酶",
-#           "*r-谷氨酰基转换酶",
-#           ]
-#
-# for column in columns:
-#     if column != "体检日期" and column != "性别":
-#         max_value = train_m[column].max()
-#         min_value = train_m[column].min()
-#         avg_value = train_m[column].mean()
-#         train_m[column+"max"] = train_m[column].apply(lambda x : x - max_value)
-
-# 年龄分组
-# age_cut = pd.cut(train_m['年龄'], [1, 20, 30, 35, 40, 43, 46, 49, 52, 55, 58, 61, 64, 67, 70, 73, 76, 79, 82, 85, 88])
-# age_cut = pd.DataFrame({'age': age_cut})
-# # age_cut.rename(columns={'年龄': 'age'}, inplace=True)
-# train_m = pd.concat([train_m, age_cut], axis=1)
-# # train_m.drop(['年龄'], axis=1, inplace=True)
-
-# train_m = pd.get_dummies(train_m, columns=['性别','age'])
-
+diaFeature = Feature(train_m)
+diaFeature.normal_value()
+diaFeature.statistics()
 drop_list = ['id', '血糖','体检日期','性别', '血小板比积', '血小板计数', '嗜酸细胞%']
+diaFeature.drop_feature(drop_list)
+train_m = diaFeature.get_train()
 train_y = train['血糖']
-train_m.drop(drop_list, axis=1, inplace=True)
 
 # 重新切分训练与测试数据
 train_x = train_m.iloc[:num_train]
@@ -98,7 +77,7 @@ error(y_test, y_pred)
 predict = gbm.predict(test_X, num_iteration=gbm.best_iteration)
 data1 = pd.DataFrame(predict)
 # save
-save(data1, 'lgb')
+# save(data1, 'lgb')
 
 # gbm_online = lgb.train(params,
 #                        train_all,
