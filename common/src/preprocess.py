@@ -6,10 +6,11 @@ total, target, train_id, test_id, total_ID = read_data()
 
 feature = Feature(total)
 feature.drop_feature(['date'])
-feature.long_tail()
 feature.fix_missing()
+feature.long_tail()
 feature.statistics()
-
+feature.combine_feature()
+feature.drop_feature(['尿素std'])
 feature.one_hot(['gender'])
 
 total = feature.get_train()

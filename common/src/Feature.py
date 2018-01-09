@@ -29,7 +29,7 @@ class Feature:
         self.train['甘油三酯_normal'] = self.train['甘油三酯'].apply(normal, args=(1.69,))
         self.train['尿素_normal'] = self.train['尿素'].apply(normal, args=(7.1,))
         self.train['尿酸_normal'] = self.train.apply(
-            lambda x: 0 if (x['性别'] == '女' and x['尿酸'] > 357) or (x['性别'] == '男' and x['尿酸'] > 416) else 1, axis=1)
+            lambda x: 0 if (x['gender'] == 0 and x['尿酸'] > 357) or (x['gender'] == 1 and x['尿酸'] > 416) else 1, axis=1)
         self.train['*天门冬氨酸氨基转换酶_normal'] = self.train['*天门冬氨酸氨基转换酶'].apply(normal, args=(40,))
 
     def one_hot(self, feature_list):
@@ -77,3 +77,19 @@ class Feature:
         train_m = pd.concat([self.train, age_cut], axis=1)
         # train_m.drop(['年龄'], axis=1, inplace=True)
         self.train = pd.get_dummies(train_m, columns=['性别', 'age'])
+
+    def combine_feature(self):
+        columns = ["甘油三酯", "尿酸"]
+        source = "age"
+        for column in columns:
+            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
+
+        columns = ["尿酸"]
+        source = "尿素"
+        for column in columns:
+            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
+
+        columns = ["红细胞平均血红蛋白浓度"]
+        source = "尿酸"
+        for column in columns:
+            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
