@@ -67,16 +67,15 @@ class Feature:
                 self.train[column + "avg"] = self.train[column].apply(lambda x: x - avg_value)
                 self.train[column + "std"] = self.train[column].apply(lambda x: (x - avg_value) / std_value)
 
-
     def age_group(self):
         # 年龄分组
-        age_cut = pd.cut(self.train['年龄'],
+        age_cut = pd.cut(self.train['age'],
                          [1, 20, 30, 35, 40, 43, 46, 49, 52, 55, 58, 61, 64, 67, 70, 73, 76, 79, 82, 85, 88])
-        age_cut = pd.DataFrame({'age': age_cut})
+        age_cut = pd.DataFrame({'age_cut': age_cut})
         # age_cut.rename(columns={'年龄': 'age'}, inplace=True)
         train_m = pd.concat([self.train, age_cut], axis=1)
         # train_m.drop(['年龄'], axis=1, inplace=True)
-        self.train = pd.get_dummies(train_m, columns=['性别', 'age'])
+        self.train = pd.get_dummies(train_m, columns=['age_cut'])
 
     def combine_feature(self):
         columns = ["甘油三酯", "尿酸"]
@@ -93,3 +92,18 @@ class Feature:
         source = "尿酸"
         for column in columns:
             self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
+
+        columns = ["高密度脂蛋白胆固醇", "低密度脂蛋白胆固醇"]
+        source = "总胆固醇"
+        self.train["其他胆固醇和"] = self.train.apply(lambda x: x[source] - x[columns[0]] - x[columns[1]], axis=1)
+
+        columns = ["白蛋白", "*球蛋白"]
+        source = "*总蛋白"
+        self.train["其他蛋白和"] = self.train.apply(lambda x: x[source] - x[columns[0]] - x[columns[1]], axis=1)
+
+        columns = ["*天门冬氨酸氨基转换酶", "*丙氨酸氨基转换酶", "*碱性磷酸酶", "*r-谷氨酰基转换酶"]
+        self.train["xx酶总和"] = self.train.apply(lambda x: x[columns[0]] + x[columns[1]] + x[columns[2]] + x[columns[3]], axis=1)
+
+    def missing_num(self):
+        missing_num = pd.DataFrame({'missing_num': len(self.train.columns) - self.train.T.count()})
+        self.train = pd.concat([self.train, missing_num], axis=1)
