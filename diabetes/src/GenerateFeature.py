@@ -69,15 +69,17 @@ def main():
 
     index = []
     scores = []
+    source = "红细胞平均体积"
     for column in columns:
-        tmp = cp.deepcopy(train)
-        tmp.pop(column)
-        score = get_score(tmp, target)
-        print(column, score)
-        if score < base_score:
-            print("greater")
-            index.append(column)
-            scores.append(score)
+        if column != source:
+            tmp = cp.deepcopy(train)
+            tmp[source + "*" + column] = tmp.apply(lambda x: x[source] * x[column], axis=1)
+            score = get_score(tmp, target)
+            print(column, score)
+            if score < base_score:
+                print("greater")
+                index.append(column)
+                scores.append(score)
 
     pd.set_option("max_rows", 200)
     features = pd.DataFrame({"index": index, "scores": scores})

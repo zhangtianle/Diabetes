@@ -26,8 +26,8 @@ class PredictNan:
         for i, res in enumerate(boolen_matrix):
             if res:
                 self.continue_columns.append(columns[i])
-                self.targets = pd.concat([pd.DataFrame(self.train[columns[i]]), self.targets],axis=1)
-                self.train.pop(columns[i])
+				self.targets = pd.concat([pd.DataFrame(self.train[columns[i]]), self.targets],axis=1)
+				self.train.pop(columns[i])
 
             
                 
