@@ -17,7 +17,6 @@ class PredictNan:
         boolen_matrix = np.any(data.isnull(), axis=0)
 
         self.continue_columns = []
-        self.discrete_columns = []
 
 
         self.targets = cp.deepcopy(ID)
@@ -26,24 +25,15 @@ class PredictNan:
         
         for i, res in enumerate(boolen_matrix):
             if res:
-                if len(data[columns[i]].unique()) > 10:
-                    self.continue_columns.append(columns[i])
-                else:
-                    self.discrete_columns.append(columns[i])
+                self.continue_columns.append(columns[i])
                 self.targets = pd.concat([pd.DataFrame(self.train[columns[i]]), self.targets],axis=1)
                 self.train.pop(columns[i])
 
-        columns = set(self.train.columns.tolist())
-        for column in columns:
-            if self.train[column].dtype != "object":
-                self.train[column] = MinMaxScaler().fit_transform(self.train[column].as_matrix().reshape(-1,1))                
+            
                 
         self.train = pd.concat([ID, self.train], axis=1)
 
-        print(len(self.continue_columns), len(self.discrete_columns))
-        for i, column in enumerate(self.discrete_columns):
-            self.predict_discrete(column)
-            print(column, i)
+        print(len(self.continue_columns))
 
 
         for i, column in enumerate(self.continue_columns):
@@ -62,35 +52,21 @@ class PredictNan:
         test_x.pop("id")
         test_x = test_x.as_matrix()
         train_y = self.targets.loc[~self.targets[column].isnull()][column].as_matrix()
-        clf = lgb.LGBMRegressor(objective="regression",
-                boosting_type="GBDT",
-                num_leaves=31,
-                learning_rate=0.01,
-                feature_fraction=0.9,
-                bagging_fraction=0.8,
-                bagging_freq=5,
-                n_estimators=100)
+        clf =  lgb.LGBMRegressor(objective='regression',
+                        boosting_type ="GBDT",
+                        num_leaves=17,
+                        learning_rate=0.01,
+                        feature_fraction=0.5,
+                        bagging_fraction=0.5,
+                        bagging_freq=5,
+                        reg_alpha=0.5,
+                        reg_lambda=0.5,
+                        n_estimators=400)
         clf.fit(train_x, train_y)
         predict = clf.predict(test_x)
         for i, index in enumerate(test_id.index.tolist()):
             self.targets[column][index] = predict[i]
 
-    def predict_discrete(self, column):
-        test_id = self.targets.loc[self.targets[column].isnull()]["id"]
-        train_id = self.targets.loc[~self.targets[column].isnull()]["id"]
-        train_x = self.train.loc[self.train["id"].isin(train_id)]
-        train_x.pop("id")
-        train_x = train_x.as_matrix()
-        test_x = self.train.loc[self.train["id"].isin(test_id)]
-        test_x.pop("id")
-        test_x = test_x.as_matrix()
-        train_y = self.targets.loc[~self.targets[column].isnull()][column].as_matrix()
-        clf = DecisionTreeRegressor(max_depth=3)
-        clf.fit(train_x, train_y)
-
-        predict = clf.predict(test_x)
-        for i, index in enumerate(test_id.index.tolist()):
-            self.targets[column][index] = predict[i]
 def main():
     train = pd.read_csv("../data/raw/train.csv")
     ID = pd.DataFrame({"ID":train.pop("ID")})
