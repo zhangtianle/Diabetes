@@ -5,7 +5,7 @@ import pandas as pd
 total, target, train_id, test_id, total_ID = read_data()
 
 feature = Feature(total)
-feature.drop_feature(['date'])
+feature.week_day()
 # feature.missing_num()
 feature.fix_missing()
 feature.long_tail()

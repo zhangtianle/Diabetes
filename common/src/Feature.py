@@ -45,7 +45,8 @@ class Feature:
         """
         columns = self.train.columns.tolist()
         for column in columns:
-            self.train[column] = self.train[column].fillna(self.train[column].mean())
+            # self.train[column] = self.train[column].fillna(self.train[column].mean())
+            self.train[column] = self.train[column].fillna(self.train[column].median())
 
     def drop_feature(self, feature_list):
         self.train.drop(feature_list, axis=1, inplace=True)
@@ -107,3 +108,9 @@ class Feature:
     def missing_num(self):
         missing_num = pd.DataFrame({'missing_num': len(self.train.columns) - self.train.T.count()})
         self.train = pd.concat([self.train, missing_num], axis=1)
+
+    def week_day(self):
+        self.train['date'] = pd.to_datetime(self.train['date'])
+        self.train['weekday'] = self.train['date'].dt.weekday
+        self.train.drop(['date'], axis=1, inplace=True)
+        self.train = pd.get_dummies(self.train, columns=['weekday'])

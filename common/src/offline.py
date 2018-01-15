@@ -30,8 +30,8 @@ Y = target.as_matrix()
 # test_X = PolynomialFeatures().fit_transform(test_X)
 
 N = 5
-kf = KFold(n_splits=N, shuffle=True, random_state=201801)
-# kf = KFold(n_splits=N, random_state=42)
+# kf = KFold(n_splits=N, shuffle=True, random_state=201801)
+kf = KFold(n_splits=N, random_state=42)
 result_mean = 0.0
 i = 0
 test_preds = np.zeros((test_X.shape[0], N))
@@ -40,7 +40,7 @@ for train_index, test_index in kf.split(X):
     testing_features, testing_target = X[test_index], Y[test_index]
 
     exported_pipeline = Pipeline([
-        # ("scaler", MaxAbsScaler()),
+        ("scaler", MaxAbsScaler()),
         ("SVR", StackingEstimator(
             estimator=LinearSVR(C=0.01, dual=False, epsilon=1.0, loss="squared_epsilon_insensitive", tol=0.001))),
         ("RidgeCV", StackingEstimator(estimator=RidgeCV())),
@@ -51,23 +51,25 @@ for train_index, test_index in kf.split(X):
                                   feature_fraction=0.5,
                                   bagging_fraction=0.5,
                                   bagging_freq=5,
-                                  reg_alpha=0.5,
-                                  reg_lambda=0.5,
+                                  # reg_alpha=0.5,
+                                  # reg_lambda=0.5,
                                   n_estimators=400))]
     )
 
     exported_pipeline.fit(training_features, training_target)
     results = exported_pipeline.predict(testing_features)
 
-    clf = SVR(C=12, epsilon=0.02, gamma=0.02)
-    clf.fit(training_features, training_target)
-    results_clf = clf.predict(testing_features)
-    results = (0.9 * results + 0.1 * results_clf)
+    # clf = SVR(C=12, epsilon=0.02, gamma=0.02)
+    # clf.fit(training_features, training_target)
+    # results_clf = clf.predict(testing_features)
+    # results = (1 * results + 0 * results_clf)
+    results = (1 * results)
 
     # 直接加权融合
     test_pred = exported_pipeline.predict(test_X)
-    test_pred_clf = clf.predict(test_X)
-    test_preds[:, i] = 0.9 * test_pred + 0.1 * test_pred_clf
+    # test_pred_clf = clf.predict(test_X)
+    # test_preds[:, i] = 1 * test_pred + 0 * test_pred_clf
+    test_preds[:, i] = 1 * test_pred
 
     i += 1
     result_mean += np.round(mean_squared_error(testing_target, results), 5)
@@ -76,4 +78,4 @@ result_mean /= N
 print("Mean squared error: %.5f" % (result_mean / 2))
 
 submission = pd.DataFrame({'pred':test_preds.mean(axis=1)})
-save(submission, 'tpop_kfold_True_201801_mean_0.95579')
+save(submission, 'tpop_kfold_True_0.93519')
