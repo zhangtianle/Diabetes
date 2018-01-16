@@ -56,7 +56,8 @@ def modif_value(training_features, training_target, training_labels, testing_fea
             predicts[i] = -1
     pred_high_list = list(np.where(predicts==-1)[0])
     
-    
+    if len(pred_high_list)==0:
+        return [],[]
     exported_pipeline = Pipeline([
     ("scaler",MaxAbsScaler()),
     ("SVR",StackingEstimator(estimator=LinearSVR(C=0.01, dual=False, epsilon=1.0, loss="squared_epsilon_insensitive", tol=0.001))),
