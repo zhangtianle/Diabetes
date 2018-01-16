@@ -144,7 +144,8 @@ for train_index, test_index in kf.split(train_x):
     
     test_preds[:, i] = test_pred
     i += 1
-	
+
+results = test_preds.mean(axis=1)
 #results[313] = 15.4860937360076
 #results[938] = 17.5400019823901
 ouput = pd.DataFrame()
