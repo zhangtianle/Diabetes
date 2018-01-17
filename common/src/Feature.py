@@ -26,11 +26,17 @@ class Feature:
             self.train[column] = self.train[column].apply(lambda x: np.log1p(x))
 
     def normal_value(self):
+        # gender 1 为 男 ，2 为 女
+        # 返回值 1 不正常 ，0 为 正常
         self.train['甘油三酯_normal'] = self.train['甘油三酯'].apply(normal, args=(1.69,))
         self.train['尿素_normal'] = self.train['尿素'].apply(normal, args=(7.1,))
         self.train['尿酸_normal'] = self.train.apply(
-            lambda x: 0 if (x['gender'] == 0 and x['尿酸'] > 357) or (x['gender'] == 1 and x['尿酸'] > 416) else 1, axis=1)
+            lambda x: 1 if (x['gender'] == 0 and x['尿酸'] > 357) or (x['gender'] == 1 and x['尿酸'] > 416) else 0, axis=1)
+        self.train['肌酐_normal'] = self.train.apply(
+            lambda x: 1 if (x['gender'] == 0 and x['肌酐'] > 108) or (x['gender'] == 1 and x['肌酐'] > 133) else 0, axis=1)
         self.train['*天门冬氨酸氨基转换酶_normal'] = self.train['*天门冬氨酸氨基转换酶'].apply(normal, args=(40,))
+        self.train['总胆固醇_normal'] = self.train['总胆固醇'].apply(normal, args=(5.2,))
+        self.train['高密度脂蛋白胆固醇_normal'] = self.train['高密度脂蛋白胆固醇'].apply(normal, args=(1.21,))
 
     def one_hot(self, feature_list):
         for features in feature_list:

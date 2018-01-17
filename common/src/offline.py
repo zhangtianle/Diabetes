@@ -48,12 +48,12 @@ for train_index, test_index in kf.split(X):
                                   boosting_type="GBDT",
                                   num_leaves=31,
                                   learning_rate=0.01,
-                                  feature_fraction=0.5,
+                                  feature_fraction=0.8,
                                   bagging_fraction=0.5,
-                                  bagging_freq=5,
-                                  # reg_alpha=0.5,
+                                  bagging_freq=3,
+                                  reg_alpha=0.5,
                                   # reg_lambda=0.5,
-                                  n_estimators=400))]
+                                  n_estimators=300))]
     )
 
     exported_pipeline.fit(training_features, training_target)
@@ -63,7 +63,6 @@ for train_index, test_index in kf.split(X):
     # clf.fit(training_features, training_target)
     # results_clf = clf.predict(testing_features)
     # results = (1 * results + 0 * results_clf)
-    results = (1 * results)
 
     # 直接加权融合
     test_pred = exported_pipeline.predict(test_X)
@@ -78,4 +77,4 @@ result_mean /= N
 print("Mean squared error: %.5f" % (result_mean / 2))
 
 submission = pd.DataFrame({'pred':test_preds.mean(axis=1)})
-save(submission, 'tpop_kfold_True_0.93519')
+save(submission, 'tpop_kfold_True_0.93258')
