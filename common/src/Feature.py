@@ -85,7 +85,7 @@ class Feature:
         self.train = pd.get_dummies(train_m, columns=['age_cut'])
 
     def combine_feature(self):
-        columns = ["甘油三酯", "尿酸"]
+        columns = ["甘油三酯", "尿酸","红细胞计数"]
         source = "age"
         for column in columns:
             self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
@@ -100,6 +100,16 @@ class Feature:
         for column in columns:
             self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
 
+        # total['中性粒细胞/淋巴细胞'] = 1.0* total['中性粒细胞%'] / total['淋巴细胞%'] #0.94
+        self.train['红细胞计数^2'] = self.train['红细胞计数'] * self.train['红细胞计数']  # 0.93581
+        self.train['尿素^2'] = self.train['尿素'] * self.train['尿素']  # 0.93540
+        # total['肌酐^2'] = total['肌酐'] * total['肌酐'] #0.93624
+        self.train['尿酸^2'] = self.train['尿酸'] * self.train['尿酸']  # 0.93712
+        self.train['总胆固醇^2'] = self.train['总胆固醇'] * self.train['总胆固醇']  # 0.93471
+        self.train['甘油三酯^2'] = self.train['甘油三酯'] * self.train['甘油三酯']  # 0.93392
+        # total['红细胞计数'] = 1.2*total['红细胞计数'] #0.93703
+
+        '''
         columns = ["高密度脂蛋白胆固醇", "低密度脂蛋白胆固醇"]
         source = "总胆固醇"
         self.train["其他胆固醇和"] = self.train.apply(lambda x: x[source] - x[columns[0]] - x[columns[1]], axis=1)
@@ -110,7 +120,7 @@ class Feature:
 
         columns = ["*天门冬氨酸氨基转换酶", "*丙氨酸氨基转换酶", "*碱性磷酸酶", "*r-谷氨酰基转换酶"]
         self.train["xx酶总和"] = self.train.apply(lambda x: x[columns[0]] + x[columns[1]] + x[columns[2]] + x[columns[3]], axis=1)
-
+        '''
     def missing_num(self):
         missing_num = pd.DataFrame({'missing_num': len(self.train.columns) - self.train.T.count()})
         self.train = pd.concat([self.train, missing_num], axis=1)

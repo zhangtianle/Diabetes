@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import RidgeCV
 from sklearn.pipeline import  Pipeline
-from sklearn.svm import SVR,SVC
+from sklearn.svm import SVC
 from sklearn.linear_model import RidgeClassifierCV,LogisticRegression
 from sklearn.model_selection import KFold
 import lightgbm as lgb
@@ -12,6 +12,7 @@ from tpot.builtins import StackingEstimator
 from sklearn.ensemble import BaggingClassifier
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
+from xgboost import XGBRegressor
 #自定义分类器
 '''
 融合lgb和LR
@@ -109,24 +110,24 @@ def main():
         #构造模型，预测血糖值
         exported_pipeline = Pipeline([
             ("scaler", MaxAbsScaler()),
-            ("SVR", StackingEstimator(
-                estimator=LinearSVR(C=0.01, dual=False, epsilon=1.0, loss="squared_epsilon_insensitive", tol=0.001))),
+            ("SVR", StackingEstimator(estimator=LinearSVR(C=0.01, dual=False, epsilon=1.0, loss="squared_epsilon_insensitive", tol=0.001))),
             ("RidgeCV", StackingEstimator(estimator=RidgeCV())),
-            ("LGB", lgb.LGBMRegressor(objective='regression',
-                                      boosting_type="GBDT",
-                                      num_leaves=17,
-                                      learning_rate=0.01,
-                                      feature_fraction=0.5,
-                                      bagging_fraction=0.5,
-                                      bagging_freq=5,
-                                      reg_alpha=0.1,
-                                      reg_lambda=0.1,
-                                      n_estimators=400))]
+            ("XGB", XGBRegressor(max_depth=5,
+                                 colsample_bytree=0.8,
+                                 subsample=0.8,
+                                 tweedie_variance_power=1.4,
+                                 eta=0.0008,
+                                 booster="gbtree",
+                                 gamma=1,
+                                 silent=1,
+                                 min_child_weight=5,
+                                 objective="reg:tweedie"))]
         )
 
         exported_pipeline.fit(training_features, training_target)
 
         test_pred = exported_pipeline.predict(test_x)
+        '''
         #预测异常值
         high_results, pred_high_list = modif_value(training_features, high_labels[train_index],
                                                          test_x, train_x[np.where(high_labels == -1)[0]],
@@ -137,7 +138,7 @@ def main():
                 test_pred[jj] = high_results[ii]
         for index, value in zip(high_results, pred_high_list):
             print(index, value)
-
+        '''
         test_preds[:, i] = test_pred
         i += 1
     results = test_preds.mean(axis=1)
