@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
+import datetime
 from sklearn.linear_model import RidgeCV
+from sklearn.metrics import mean_squared_error
 from sklearn.pipeline import  Pipeline
 from sklearn.svm import SVC
 from sklearn.linear_model import RidgeClassifierCV,LogisticRegression
@@ -12,7 +14,7 @@ from tpot.builtins import StackingEstimator
 from sklearn.ensemble import BaggingClassifier
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
-from xgboost import XGBRegressor
+from xgboost import XGBRegressor,XGBClassifier
 #自定义分类器
 '''
 融合lgb和LR
@@ -67,14 +69,27 @@ def modif_value(training_features, training_labels, testing_features, X, Y):
             ("SVR", StackingEstimator(
                 estimator=LinearSVR(C=0.01, dual=False, epsilon=1.0, loss="squared_epsilon_insensitive", tol=0.001))),
             ("RidgeCV", StackingEstimator(estimator=RidgeCV())),
-            ("LGB", lgb.LGBMRegressor(objective='regression',
-                                      boosting_type="GBDT",
-                                      num_leaves=31,
-                                      learning_rate=0.01,
-                                      feature_fraction=0.5,
-                                      bagging_fraction=0.5,
-                                      bagging_freq=5,
-                                      n_estimators=400))]
+            # ("LGB", lgb.LGBMRegressor(objective='regression',
+            #                           boosting_type="GBDT",
+            #                           num_leaves=31,
+            #                           learning_rate=0.01,
+            #                           feature_fraction=0.5,
+            #                           bagging_fraction=0.5,
+            #                           bagging_freq=5,
+            #                           n_estimators=400))
+            ("XGB", XGBRegressor(max_depth=8,
+                                 n_estimators=100,
+                                 colsample_bytree=0.8,
+                                 subsample=0.8,
+                                 tweedie_variance_power=1.4,
+                                 eta=0.01,
+                                 booster="gbtree",
+                                 random_state=1015,
+                                 gamma=1,
+                                 silent=1,
+                                 min_child_weight=5,
+                                 objective="reg:tweedie"))
+        ]
         )
         exported_pipeline.fit(X, Y)
         negative_results = exported_pipeline.predict(testing_features[negative_pred_list])
@@ -95,7 +110,7 @@ def main():
 
     high_labels = np.zeros((train_y.shape[0],))
     for i in range(train_y.shape[0]):
-        if train_y[i] < 10:
+        if train_y[i] < 11.2:  #训练集的高值判断
             high_labels[i] = 1
         else:
             high_labels[i] = -1
@@ -103,6 +118,7 @@ def main():
     N = 5
     kf = KFold(n_splits=N, random_state=42)
     i = 0
+    result_mean = 0.0
     test_preds = np.zeros((test_x.shape[0], N))
     for train_index, test_index in kf.split(train_x):
         training_features, training_target = train_x[train_index], train_y[train_index]
@@ -112,12 +128,22 @@ def main():
             ("scaler", MaxAbsScaler()),
             ("SVR", StackingEstimator(estimator=LinearSVR(C=0.01, dual=False, epsilon=1.0, loss="squared_epsilon_insensitive", tol=0.001))),
             ("RidgeCV", StackingEstimator(estimator=RidgeCV())),
-            ("XGB", XGBRegressor(max_depth=5,
+            # ("LGB", StackingEstimator(estimator=lgb.LGBMRegressor(objective='regression',
+            #                           boosting_type="GBDT",
+            #                           num_leaves=31,
+            #                           learning_rate=0.01,
+            #                           feature_fraction=0.5,
+            #                           bagging_fraction=0.5,
+            #                           bagging_freq=5,
+            #                           n_estimators=400))),
+            ("XGB", XGBRegressor(max_depth=8,
+                                 n_estimators=100,
                                  colsample_bytree=0.8,
                                  subsample=0.8,
                                  tweedie_variance_power=1.4,
-                                 eta=0.0008,
+                                 eta=0.01,
                                  booster="gbtree",
+                                 random_state=1015,
                                  gamma=1,
                                  silent=1,
                                  min_child_weight=5,
@@ -127,7 +153,7 @@ def main():
         exported_pipeline.fit(training_features, training_target)
 
         test_pred = exported_pipeline.predict(test_x)
-        '''
+
         #预测异常值
         high_results, pred_high_list = modif_value(training_features, high_labels[train_index],
                                                          test_x, train_x[np.where(high_labels == -1)[0]],
@@ -138,13 +164,25 @@ def main():
                 test_pred[jj] = high_results[ii]
         for index, value in zip(high_results, pred_high_list):
             print(index, value)
-        '''
+
+        # 线下CV
+        testing_results = exported_pipeline.predict(testing_features)
+        result_mean += np.round(mean_squared_error(testing_target, testing_results), 5)
+        print(np.round(mean_squared_error(testing_target, testing_results), 5) / 2)
+
         test_preds[:, i] = test_pred
         i += 1
     results = test_preds.mean(axis=1)
+
+    # 线下CV
+    result_mean /= N
+    print("offline CV Mean squared error: %.5f" % (result_mean / 2))
+
     ouput = pd.DataFrame()
     ouput[0] = results
-    #ouput.to_csv("../result/Test.csv", header=None, index=False, encoding="utf-8")
+    # ouput.to_csv("../result/Test.csv", header=None, index=False, encoding="utf-8")
+    ouput.to_csv(r'../result/test{}.csv'.format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
+               header=None,index=False, float_format='%.4f')
     print(ouput.describe())
     print(ouput.loc[ouput[0] > 8])
 
