@@ -26,11 +26,11 @@ class myStackingFeatures(BaseEstimator, TransformerMixin):
         self.estimator = None
         self.lgb = lgb.LGBMClassifier(boosting_type="GBDT",
                                       num_leaves=31,
-                                      learning_rate=0.01,
-                                      colsample_bytree=0.5,
+                                      learning_rate=0.02,
+                                      colsample_bytree=0.8,
                                       subsample=0.5,
                                       subsample_freq=5,
-                                      n_estimators=400,
+                                      n_estimators=200,
                                       n_jobs=-1)
         self.grd_enc = OneHotEncoder()
         self.lr = LogisticRegression()
@@ -80,7 +80,7 @@ def modif_value(training_features, training_labels, testing_features, X, Y):
             #                           bagging_freq=5,
             #                           n_estimators=400))
             ("XGB", XGBRegressor(max_depth=8,
-                                 n_estimators=100,
+                                 n_estimators=200,
                                  colsample_bytree=0.8,
                                  subsample=0.8,
                                  tweedie_variance_power=1.4,
