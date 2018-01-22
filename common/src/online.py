@@ -15,6 +15,7 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 from xgboost import XGBRegressor,XGBClassifier
+from util import save
 #自定义分类器
 '''
 融合lgb和LR
@@ -26,10 +27,11 @@ class myStackingFeatures(BaseEstimator, TransformerMixin):
         self.lgb = lgb.LGBMClassifier(boosting_type="GBDT",
                                       num_leaves=31,
                                       learning_rate=0.01,
-                                      feature_fraction=0.5,
-                                      bagging_fraction=0.5,
-                                      bagging_freq=5,
-                                      n_estimators=400)
+                                      colsample_bytree=0.5,
+                                      subsample=0.5,
+                                      subsample_freq=5,
+                                      n_estimators=400,
+                                      n_jobs=-1)
         self.grd_enc = OneHotEncoder()
         self.lr = LogisticRegression()
         self.classes_ = [-1,1]
@@ -88,7 +90,8 @@ def modif_value(training_features, training_labels, testing_features, X, Y):
                                  gamma=1,
                                  silent=1,
                                  min_child_weight=5,
-                                 objective="reg:tweedie"))
+                                 objective="reg:tweedie",
+                                 n_jobs=-1))
         ]
         )
         exported_pipeline.fit(X, Y)
@@ -147,7 +150,8 @@ def main():
                                  gamma=1,
                                  silent=1,
                                  min_child_weight=5,
-                                 objective="reg:tweedie"))]
+                                 objective="reg:tweedie",
+                                 n_jobs=-1))]
         )
 
         exported_pipeline.fit(training_features, training_target)
@@ -167,8 +171,17 @@ def main():
 
         # 线下CV
         testing_results = exported_pipeline.predict(testing_features)
+        # 改值
+        cv_high_results, cv_pred_high_list = modif_value(training_features, high_labels[train_index],
+                                                         testing_features, train_x[np.where(high_labels == -1)[0]],
+                                                         train_y[np.where(high_labels == -1)[0]])
+
+        if len(cv_high_results) != 0 and len(cv_pred_high_list) != 0:
+            for ii, jj in enumerate(cv_pred_high_list):
+                testing_results[jj] = cv_high_results[ii]
+
         result_mean += np.round(mean_squared_error(testing_target, testing_results), 5)
-        print(np.round(mean_squared_error(testing_target, testing_results), 5) / 2)
+        print('CV_ROUND (', i, ') mse -> ', np.round(mean_squared_error(testing_target, testing_results), 5) / 2)
 
         test_preds[:, i] = test_pred
         i += 1
@@ -181,8 +194,9 @@ def main():
     ouput = pd.DataFrame()
     ouput[0] = results
     # ouput.to_csv("../result/Test.csv", header=None, index=False, encoding="utf-8")
-    ouput.to_csv(r'../result/test{}.csv'.format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
-               header=None,index=False, float_format='%.4f')
+    # ouput.to_csv(r'../result/test{}.csv'.format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
+    #            header=None,index=False, float_format='%.4f')
+    # save(ouput, 'xgb_class')
     print(ouput.describe())
     print(ouput.loc[ouput[0] > 8])
 
