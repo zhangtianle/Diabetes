@@ -18,7 +18,7 @@ total = feature.get_train()
 
 #读取多项式特征
 poly = pd.read_csv("../data/poly_feature/poly_feature _90.csv")
-poly = poly.iloc[:,0:5]
+poly = poly.iloc[:,0:4]
 
 poly = poly.reset_index(drop=True)
 total = total.reset_index(drop=True)
@@ -34,8 +34,5 @@ train = pd.concat([train_id, train, target], axis=1)
 
 test = total[len(train_id):].reset_index(drop=True)
 test = pd.concat([test_id, test], axis=1)
-
-
-print(test.apply(lambda x: sum(x.isnull())))
 
 save_data([train, test], ['../data/processed/train.csv', '../data/processed/test.csv'])

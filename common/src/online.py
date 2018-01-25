@@ -16,10 +16,39 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 from xgboost import XGBRegressor,XGBClassifier
 from util import save
+
+
+#自定义回归模型
+'''
+融合GBDT和LinearRegressor
+利用GBDT生成新特征，再用新特征one-hot编码，最后利用LinearRegressor做回归预测。
+'''
+class myStackingFeaturesRegressor(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.estimator = None
+        self.lgb = GradientBoostingRegressor(loss='ls', alpha=0.9,
+                                    n_estimators=100,
+                                    learning_rate=0.02,
+                                    max_depth=8,
+                                    subsample=0.8,
+                                    min_samples_split=9,
+                                    max_leaf_nodes=10)
+        self.grd_enc = OneHotEncoder()
+        self.lr = RidgeCV()
+        self.classes_ = [-1,1]
+    def fit(self, X, y=None, **fit_params):
+        self.lgb.fit(X, y)
+        self.grd_enc.fit(self.lgb.apply(X))
+        self.lr.fit(self.grd_enc.transform(self.lgb.apply(X)), y)
+    def predict(self, X):
+        return self.lr.predict(self.grd_enc.transform(self.lgb.apply(X)))
+
+
+
 #自定义分类器
 '''
 融合lgb和LR
-利用lgb生成新特征，再用新特征one-hot编码，最后利用LR左分类预测。
+利用lgb生成新特征，再用新特征one-hot编码，最后利用LR做分类预测。
 '''
 class myStackingFeatures(BaseEstimator, TransformerMixin):
     def __init__(self):
