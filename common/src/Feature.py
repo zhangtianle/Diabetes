@@ -85,7 +85,7 @@ class Feature:
         self.train = pd.get_dummies(train_m, columns=['age_cut'])
 
     def combine_feature(self):
-        columns = ["甘油三酯", "尿酸","红细胞计数"]
+        columns = ["甘油三酯", "尿酸","红细胞计数","白细胞计数"]
         source = "age"
         for column in columns:
             self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
@@ -98,7 +98,27 @@ class Feature:
         columns = ["红细胞平均血红蛋白浓度"]
         source = "尿酸"
         for column in columns:
-            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
+            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)		
+        columns = ["红细胞体积分布宽度"]
+        source = "红细胞平均体积"
+        for column in columns:
+            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)    
+			
+        columns = ["红细胞体积分布宽度"]
+        source = "红细胞平均血红蛋白量"
+        for column in columns:
+            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)       	
+        self.train["红细胞平均血红蛋白浓度"+'_onedivide']=self.train["红细胞平均血红蛋白浓度"].apply(lambda x: 1.0/x if x!=0 else 1e8)
+        columns = ["红细胞平均血红蛋白浓度_onedivide"]
+        source = "红细胞平均体积"
+        for column in columns:
+            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)         	
+			
+			
+			
+			
+			
+			
 
         # total['中性粒细胞/淋巴细胞'] = 1.0* total['中性粒细胞%'] / total['淋巴细胞%'] #0.94
         self.train['红细胞计数^2'] = self.train['红细胞计数'] * self.train['红细胞计数']  # 0.93581
