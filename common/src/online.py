@@ -16,7 +16,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import OneHotEncoder
 from xgboost import XGBRegressor,XGBClassifier
 from util import save
-
+from sklearn.ensemble import GradientBoostingRegressor
 
 #自定义回归模型
 '''
@@ -108,19 +108,7 @@ def modif_value(training_features, training_labels, testing_features, X, Y):
             #                           bagging_fraction=0.5,
             #                           bagging_freq=5,
             #                           n_estimators=400))
-            ("XGB", XGBRegressor(max_depth=8,
-                                 n_estimators=200,
-                                 colsample_bytree=0.8,
-                                 subsample=0.8,
-                                 tweedie_variance_power=1.4,
-                                 eta=0.01,
-                                 booster="gbtree",
-                                 random_state=1015,
-                                 gamma=1,
-                                 silent=1,
-                                 min_child_weight=5,
-                                 objective="reg:tweedie",
-                                 n_jobs=-1))
+            ("XGB", myStackingFeaturesRegressor())
         ]
         )
         exported_pipeline.fit(X, Y)
