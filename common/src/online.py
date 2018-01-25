@@ -123,6 +123,8 @@ def main():
     i = 0
     result_mean = 0.0
     test_preds = np.zeros((test_x.shape[0], N))
+    #构造一个用于存储异常值的字典,存储方式：id:[].例如{938:[14,14,14],314:[13]}
+    outlier = {}
     for train_index, test_index in kf.split(train_x):
         training_features, training_target = train_x[train_index], train_y[train_index]
         testing_features, testing_target = train_x[test_index], train_y[test_index]
@@ -162,10 +164,12 @@ def main():
         high_results, pred_high_list = modif_value(training_features, high_labels[train_index],
                                                          test_x, train_x[np.where(high_labels == -1)[0]],
                                                          train_y[np.where(high_labels == -1)[0]])
-        #修改异常值
+        #存储异常值
         if len(high_results) != 0 and len(pred_high_list) != 0:
             for ii, jj in enumerate(pred_high_list):
-                test_pred[jj] = high_results[ii]
+                if jj not in outlier:
+                    outlier[jj] = []
+                outlier[jj].append(high_results[ii])
         for index, value in zip(high_results, pred_high_list):
             print(index, value)
 
@@ -187,13 +191,21 @@ def main():
         i += 1
     results = test_preds.mean(axis=1)
 
+
+    #修改异常值
+    for index in outlier:
+        print(index, outlier[index])
+        results[index] = max(outlier[index])
+
+
+
     # 线下CV
     result_mean /= N
     print("offline CV Mean squared error: %.5f" % (result_mean / 2))
 
     ouput = pd.DataFrame()
     ouput[0] = results
-    # ouput.to_csv("../result/Test.csv", header=None, index=False, encoding="utf-8")
+    #ouput.to_csv("../result/1.25-WQX-PolyFeatures.csv", header=None, index=False, encoding="utf-8")
     # ouput.to_csv(r'../result/test{}.csv'.format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
     #            header=None,index=False, float_format='%.4f')
     # save(ouput, 'xgb_class')
