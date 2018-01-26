@@ -26,11 +26,17 @@ class Feature:
             self.train[column] = self.train[column].apply(lambda x: np.log1p(x))
 
     def normal_value(self):
+        # gender 1 为 男 ，2 为 女
+        # 返回值 1 不正常 ，0 为 正常
         self.train['甘油三酯_normal'] = self.train['甘油三酯'].apply(normal, args=(1.69,))
         self.train['尿素_normal'] = self.train['尿素'].apply(normal, args=(7.1,))
         self.train['尿酸_normal'] = self.train.apply(
-            lambda x: 0 if (x['gender'] == 0 and x['尿酸'] > 357) or (x['gender'] == 1 and x['尿酸'] > 416) else 1, axis=1)
+            lambda x: 1 if (x['gender'] == 0 and x['尿酸'] > 357) or (x['gender'] == 1 and x['尿酸'] > 416) else 0, axis=1)
+        self.train['肌酐_normal'] = self.train.apply(
+            lambda x: 1 if (x['gender'] == 0 and x['肌酐'] > 108) or (x['gender'] == 1 and x['肌酐'] > 133) else 0, axis=1)
         self.train['*天门冬氨酸氨基转换酶_normal'] = self.train['*天门冬氨酸氨基转换酶'].apply(normal, args=(40,))
+        self.train['总胆固醇_normal'] = self.train['总胆固醇'].apply(normal, args=(5.2,))
+        self.train['高密度脂蛋白胆固醇_normal'] = self.train['高密度脂蛋白胆固醇'].apply(normal, args=(1.21,))
 
     def one_hot(self, feature_list):
         for features in feature_list:
@@ -79,7 +85,7 @@ class Feature:
         self.train = pd.get_dummies(train_m, columns=['age_cut'])
 
     def combine_feature(self):
-        columns = ["甘油三酯", "尿酸"]
+        columns = ["甘油三酯", "尿酸","红细胞计数","白细胞计数"]
         source = "age"
         for column in columns:
             self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
@@ -94,6 +100,45 @@ class Feature:
         for column in columns:
             self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
 
+        # 大牌冲
+        self.train["单个红细胞体积宽度差"] = self.train["红细胞体积分布宽度"] / self.train["红细胞计数"]
+        self.train["尿酸谷氨比"] = self.train["尿酸"] / self.train["*r-谷氨酰基转换酶"]
+        self.train["红细胞平均血红蛋体积"] = self.train["红细胞平均血红蛋白量"] / self.train["红细胞平均血红蛋白浓度"]
+        self.train["红细胞平均血红蛋体积分布宽度"] = self.train["红细胞平均血红蛋体积"] * self.train["红细胞体积分布宽度"]
+        self.train["*天门冬氨酸氨基转换酶*红细胞平均血红蛋体积分布宽度"] = self.train["*天门冬氨酸氨基转换酶"] * self.train["红细胞平均血红蛋体积分布宽度"]
+        self.train["肌酐丙氨酸比"] = self.train["肌酐"] / self.train["*丙氨酸氨基转换酶"]
+
+        self.train["*天门冬氨酸氨基转换酶*单个红细胞体积宽度差"] = self.train["单个红细胞体积宽度差"] * self.train["*天门冬氨酸氨基转换酶"]
+        self.train["高密度脂蛋白胆固醇*尿酸谷氨比"] = self.train["高密度脂蛋白胆固醇"] * self.train["尿酸谷氨比"]
+
+        '''
+        columns = ["红细胞体积分布宽度"]
+        source = "红细胞平均体积"
+        for column in columns:
+            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)    
+			
+        columns = ["红细胞体积分布宽度"]
+        source = "红细胞平均血红蛋白量"
+        for column in columns:
+            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)       	
+        self.train["红细胞平均血红蛋白浓度"+'_onedivide']=self.train["红细胞平均血红蛋白浓度"].apply(lambda x: 1.0/x if x!=0 else 1e8)
+        columns = ["红细胞平均血红蛋白浓度_onedivide"]
+        source = "红细胞平均体积"
+        for column in columns:
+            self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)         	
+        '''
+			
+			
+        # total['中性粒细胞/淋巴细胞'] = 1.0* total['中性粒细胞%'] / total['淋巴细胞%'] #0.94
+        self.train['红细胞计数^2'] = self.train['红细胞计数'] * self.train['红细胞计数']  # 0.93581
+        self.train['尿素^2'] = self.train['尿素'] * self.train['尿素']  # 0.93540
+        # total['肌酐^2'] = total['肌酐'] * total['肌酐'] #0.93624
+        self.train['尿酸^2'] = self.train['尿酸'] * self.train['尿酸']  # 0.93712
+        self.train['总胆固醇^2'] = self.train['总胆固醇'] * self.train['总胆固醇']  # 0.93471
+        self.train['甘油三酯^2'] = self.train['甘油三酯'] * self.train['甘油三酯']  # 0.93392
+        # total['红细胞计数'] = 1.2*total['红细胞计数'] #0.93703
+
+        '''
         columns = ["高密度脂蛋白胆固醇", "低密度脂蛋白胆固醇"]
         source = "总胆固醇"
         self.train["其他胆固醇和"] = self.train.apply(lambda x: x[source] - x[columns[0]] - x[columns[1]], axis=1)
@@ -104,7 +149,7 @@ class Feature:
 
         columns = ["*天门冬氨酸氨基转换酶", "*丙氨酸氨基转换酶", "*碱性磷酸酶", "*r-谷氨酰基转换酶"]
         self.train["xx酶总和"] = self.train.apply(lambda x: x[columns[0]] + x[columns[1]] + x[columns[2]] + x[columns[3]], axis=1)
-
+        '''
     def missing_num(self):
         missing_num = pd.DataFrame({'missing_num': len(self.train.columns) - self.train.T.count()})
         self.train = pd.concat([self.train, missing_num], axis=1)

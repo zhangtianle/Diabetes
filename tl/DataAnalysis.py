@@ -1,5 +1,7 @@
 from sys import path
 
+from tl.PredictMissing import set_missing
+
 path.append('../')
 from tl.Feature import Feature
 import pandas as pd
@@ -8,6 +10,7 @@ import matplotlib.pyplot as plt
 
 train, test_A, _ = read_data()
 
+train_fix = set_missing(train)
 num_train = len(train)
 num_test_A = len(test_A)
 
