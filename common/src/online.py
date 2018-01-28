@@ -28,7 +28,7 @@ class myStackingFeaturesRegressor(BaseEstimator, TransformerMixin):
         self.estimator = None
         self.lgb = GradientBoostingRegressor(loss='ls', alpha=0.9,
                                     n_estimators=100,
-                                    learning_rate=0.02,
+                                    learning_rate=0.01,
                                     max_depth=8,
                                     subsample=0.8,
                                     min_samples_split=9,
@@ -48,7 +48,7 @@ class myStackingFeaturesRegressor(BaseEstimator, TransformerMixin):
 #自定义分类器
 '''
 融合lgb和LR
-利用lgb生成新特征，再用新特征one-hot编码，最后利用LR做分类预测。
+利用lgb生成新特征，再用新特征one-hot编码，最后利用LR左分类预测。
 '''
 class myStackingFeatures(BaseEstimator, TransformerMixin):
     def __init__(self):
@@ -159,7 +159,7 @@ def main():
             #                           bagging_freq=5,
             #                           n_estimators=400))),
             ("XGB", XGBRegressor(max_depth=8,
-                                 n_estimators=100,
+                                 n_estimators=200,
                                  colsample_bytree=0.8,
                                  subsample=0.8,
                                  tweedie_variance_power=1.4,
@@ -208,13 +208,10 @@ def main():
         i += 1
     results = test_preds.mean(axis=1)
 
-
     #修改异常值
     for index in outlier:
         print(index, outlier[index])
         results[index] = max(outlier[index])
-
-
 
     # 线下CV
     result_mean /= N

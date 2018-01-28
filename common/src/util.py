@@ -45,16 +45,14 @@ def get_url():
     return root_dir, train_url, feature_url
 
 
-def read_data():
+def read_data(test_type='A'):
     train = pd.read_csv("../data/raw/d_train.csv")
-    test = pd.read_csv("../data/raw/d_test_A.csv")
-
-    # important_feature = ['*天门冬氨酸氨基转换酶', '*丙氨酸氨基转换酶', '*碱性磷酸酶', '*r-谷氨酰基转换酶', '*总蛋白', '白蛋白', '*球蛋白', '白球比例', '甘油三酯',
-    #                      '总胆固醇', '高密度脂蛋白胆固醇', '低密度脂蛋白胆固醇', '尿素', '肌酐', '尿酸', '乙肝表面抗原', '乙肝表面抗体', '乙肝e抗原', '乙肝e抗体',
-    #                      '乙肝核心抗体']
-    # trian_imp = train.loc[:, important_feature]
-    # row_index = trian_imp[trian_imp.T.count() == 0].index
-    # train.drop(row_index, inplace=True)
+    if test_type == 'A':
+        test = pd.read_csv("../data/raw/d_test_A.csv")
+    elif test_type == 'B':
+        test = pd.read_csv("../data/raw/d_test_B.csv")
+    else:
+        raise Exception("Invalid test_type!", test_type)
 
     test_id = test.pop("id")
     train_id = train.pop("id")
