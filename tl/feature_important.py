@@ -24,13 +24,14 @@ params = {
     'objective': 'regression',
     'metric': 'mse',
     'num_leaves': 31,
-    'min_data_in_leaf': 20,
+    # 'min_data_in_leaf': 20,
     'learning_rate': 0.02,
     'lambda_l1': 1,
-    'lambda_l2': 0.2,
+    'lambda_l2': 0.5,
     'cat_smooth': 10,
     'feature_fraction': 0.5,
-    'bagging_freq': 5,
+    'bagging_fraction': 0.8,
+    'bagging_freq': 3,
     'verbosity': -1
 }
 

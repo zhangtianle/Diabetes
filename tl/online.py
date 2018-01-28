@@ -28,7 +28,7 @@ class myStackingFeaturesRegressor(BaseEstimator, TransformerMixin):
         self.estimator = None
         self.lgb = GradientBoostingRegressor(loss='ls', alpha=0.9,
                                     n_estimators=100,
-                                    learning_rate=0.02,
+                                    learning_rate=0.01,
                                     max_depth=8,
                                     subsample=0.8,
                                     min_samples_split=9,
@@ -118,8 +118,8 @@ def modif_value(training_features, training_labels, testing_features, X, Y):
     return negative_results, negative_pred_list
 def main():
     #读数据
-    train = pd.read_csv("../data/processed/train.csv")
-    test = pd.read_csv("../data/processed/test.csv")
+    train = pd.read_csv("../common/data/processed/train.csv")
+    test = pd.read_csv("../common/data/processed/test.csv")
     train.pop("id")
     test.pop("id")
     target = train.pop("血糖")
@@ -204,7 +204,11 @@ def main():
         lgb_testing_results = gbm.predict(testing_features, num_iteration=gbm.best_iteration)
         lgb_test_pred = gbm.predict(test_x)
 
-        lgb_per = 0
+        lgb_per = 0.4
+
+        ############## end lgb ##########################
+
+
 
         #预测异常值
         high_results, pred_high_list = modif_value(training_features, high_labels[train_index],
@@ -220,30 +224,35 @@ def main():
             print(index, value)
 
         # 线下CV
-        # testing_results = exported_pipeline.predict(testing_features)
-        #
-        # testing_results = (1 - lgb_per) * testing_results + lgb_per * lgb_testing_results
-        #
-        # # 改值
-        # cv_high_results, cv_pred_high_list = modif_value(training_features, high_labels[train_index],
-        #                                                  testing_features, train_x[np.where(high_labels == -1)[0]],
-        #                                                  train_y[np.where(high_labels == -1)[0]])
-        #
-        # if len(cv_high_results) != 0 and len(cv_pred_high_list) != 0:
-        #     for ii, jj in enumerate(cv_pred_high_list):
-        #         testing_results[jj] = cv_high_results[ii]
+        testing_results = exported_pipeline.predict(testing_features)
 
-        # result_mean += np.round(mean_squared_error(testing_target, testing_results), 5)
-        # print('CV_ROUND (', i, ') mse -> ', np.round(mean_squared_error(testing_target, testing_results), 5) / 2)
+        # lgb
+        testing_results = (1 - lgb_per) * testing_results + lgb_per * lgb_testing_results
 
+        # 改值
+        cv_high_results, cv_pred_high_list = modif_value(training_features, high_labels[train_index],
+                                                         testing_features, train_x[np.where(high_labels == -1)[0]],
+                                                         train_y[np.where(high_labels == -1)[0]])
+
+        if len(cv_high_results) != 0 and len(cv_pred_high_list) != 0:
+            for ii, jj in enumerate(cv_pred_high_list):
+                testing_results[jj] = cv_high_results[ii]
+
+        result_mean += np.round(mean_squared_error(testing_target, testing_results), 5)
+        print('CV_ROUND (', i, ') mse -> ', np.round(mean_squared_error(testing_target, testing_results), 5) / 2)
+
+        ############ lgb
         test_preds[:, i] = (1 - lgb_per) * test_pred + lgb_per * lgb_test_pred
         i += 1
     results = test_preds.mean(axis=1)
+
 
     #修改异常值
     for index in outlier:
         print(index, outlier[index])
         results[index] = max(outlier[index])
+
+
 
     # 线下CV
     result_mean /= N
@@ -254,7 +263,7 @@ def main():
     #ouput.to_csv("../result/1.25-WQX-PolyFeatures.csv", header=None, index=False, encoding="utf-8")
     # ouput.to_csv(r'../result/test{}.csv'.format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
     #            header=None,index=False, float_format='%.4f')
-    save(ouput, 'xgb_class')
+    # save(ouput, 'xgb_class_DaPaiCHong')
     print(ouput.describe())
     print(ouput.loc[ouput[0] > 8])
 

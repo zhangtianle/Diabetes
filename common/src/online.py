@@ -32,6 +32,7 @@ class myStackingFeaturesRegressor(BaseEstimator, TransformerMixin):
                                     max_depth=8,
                                     subsample=0.8,
                                     min_samples_split=9,
+                                    random_state=1,
                                     max_leaf_nodes=10)
         self.grd_enc = OneHotEncoder()
         self.lr = RidgeCV()
@@ -60,6 +61,7 @@ class myStackingFeatures(BaseEstimator, TransformerMixin):
                                       subsample=0.5,
                                       subsample_freq=5,
                                       n_estimators=200,
+                                      random_state=1801,
                                       n_jobs=-1)
         self.grd_enc = OneHotEncoder()
         self.lr = LogisticRegression()
@@ -177,6 +179,41 @@ def main():
 
         test_pred = exported_pipeline.predict(test_x)
 
+        ############  lgb ##############
+        # lgb_train = lgb.Dataset(training_features, training_target)
+        # lgb_eval = lgb.Dataset(testing_features, testing_target)
+        # params = {
+        #     'boosting': 'gbdt',
+        #     'objective': 'regression',
+        #     'metric': 'mse',
+        #     'num_leaves': 31,
+        #     # 'min_data_in_leaf': 20,
+        #     'learning_rate': 0.02,
+        #     'lambda_l1': 1,
+        #     'lambda_l2': 0.5,
+        #     'cat_smooth': 10,
+        #     'feature_fraction': 0.5,
+        #     'bagging_fraction': 0.8,
+        #     'bagging_freq': 3,
+        #     'verbosity': -1
+        # }
+        # gbm = lgb.train(params,
+        #                 lgb_train,
+        #                 num_boost_round=300,
+        #                 valid_sets=lgb_eval,
+        #                 verbose_eval=False,
+        #                 early_stopping_rounds=50)
+        #
+        # # predict
+        # lgb_testing_results = gbm.predict(testing_features, num_iteration=gbm.best_iteration)
+        # lgb_test_pred = gbm.predict(test_x)
+        #
+        # lgb_per = 0.4
+
+        ############## end lgb ##########################
+
+
+
         #预测异常值
         high_results, pred_high_list = modif_value(training_features, high_labels[train_index],
                                                          test_x, train_x[np.where(high_labels == -1)[0]],
@@ -192,6 +229,10 @@ def main():
 
         # 线下CV
         testing_results = exported_pipeline.predict(testing_features)
+
+        # # lgb
+        # testing_results = (1 - lgb_per) * testing_results + lgb_per * lgb_testing_results
+
         # 改值
         cv_high_results, cv_pred_high_list = modif_value(training_features, high_labels[train_index],
                                                          testing_features, train_x[np.where(high_labels == -1)[0]],
@@ -204,6 +245,8 @@ def main():
         result_mean += np.round(mean_squared_error(testing_target, testing_results), 5)
         print('CV_ROUND (', i, ') mse -> ', np.round(mean_squared_error(testing_target, testing_results), 5) / 2)
 
+        ############ lgb
+        # test_preds[:, i] = (1 - lgb_per) * test_pred + lgb_per * lgb_test_pred
         test_preds[:, i] = test_pred
         i += 1
     results = test_preds.mean(axis=1)

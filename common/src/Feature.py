@@ -49,6 +49,7 @@ class Feature:
             处理缺失值
         :return:
         """
+        # self.train = self.train.fillna(self.train.interpolate(method='polynomial'))
         columns = self.train.columns.tolist()
         for column in columns:
             # self.train[column] = self.train[column].fillna(self.train[column].mean())
@@ -101,14 +102,14 @@ class Feature:
             self.train[source + "*" + column] = self.train.apply(lambda x: x[source] * x[column], axis=1)
 
         # 大牌冲
-        self.train["单个红细胞体积宽度差"] = self.train["红细胞体积分布宽度"] / self.train["红细胞计数"]
+        # self.train["单个红细胞体积宽度差"] = self.train["红细胞体积分布宽度"] / self.train["红细胞计数"]
         self.train["尿酸谷氨比"] = self.train["尿酸"] / self.train["*r-谷氨酰基转换酶"]
-        self.train["红细胞平均血红蛋体积"] = self.train["红细胞平均血红蛋白量"] / self.train["红细胞平均血红蛋白浓度"]
-        self.train["红细胞平均血红蛋体积分布宽度"] = self.train["红细胞平均血红蛋体积"] * self.train["红细胞体积分布宽度"]
-        self.train["*天门冬氨酸氨基转换酶*红细胞平均血红蛋体积分布宽度"] = self.train["*天门冬氨酸氨基转换酶"] * self.train["红细胞平均血红蛋体积分布宽度"]
+        # self.train["红细胞平均血红蛋体积"] = self.train["红细胞平均血红蛋白量"] / self.train["红细胞平均血红蛋白浓度"]
+        # self.train["红细胞平均血红蛋体积分布宽度"] = self.train["红细胞平均血红蛋体积"] * self.train["红细胞体积分布宽度"]
+        # self.train["*天门冬氨酸氨基转换酶*红细胞平均血红蛋体积分布宽度"] = self.train["*天门冬氨酸氨基转换酶"] * self.train["红细胞平均血红蛋体积分布宽度"]
         self.train["肌酐丙氨酸比"] = self.train["肌酐"] / self.train["*丙氨酸氨基转换酶"]
 
-        self.train["*天门冬氨酸氨基转换酶*单个红细胞体积宽度差"] = self.train["单个红细胞体积宽度差"] * self.train["*天门冬氨酸氨基转换酶"]
+        # self.train["*天门冬氨酸氨基转换酶*单个红细胞体积宽度差"] = self.train["单个红细胞体积宽度差"] * self.train["*天门冬氨酸氨基转换酶"]
         self.train["高密度脂蛋白胆固醇*尿酸谷氨比"] = self.train["高密度脂蛋白胆固醇"] * self.train["尿酸谷氨比"]
 
         '''
