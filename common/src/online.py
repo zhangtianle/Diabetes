@@ -152,14 +152,6 @@ def main():
             ("scaler", MaxAbsScaler()),
             ("SVR", StackingEstimator(estimator=LinearSVR(C=0.01, dual=False, epsilon=1.0, loss="squared_epsilon_insensitive", tol=0.001))),
             ("RidgeCV", StackingEstimator(estimator=RidgeCV())),
-            # ("LGB", StackingEstimator(estimator=lgb.LGBMRegressor(objective='regression',
-            #                           boosting_type="GBDT",
-            #                           num_leaves=31,
-            #                           learning_rate=0.01,
-            #                           feature_fraction=0.5,
-            #                           bagging_fraction=0.5,
-            #                           bagging_freq=5,
-            #                           n_estimators=400))),
             ("XGB", XGBRegressor(max_depth=8,
                                  n_estimators=100,
                                  colsample_bytree=0.8,
@@ -203,15 +195,14 @@ def main():
         #                 valid_sets=lgb_eval,
         #                 verbose_eval=False,
         #                 early_stopping_rounds=50)
-        #
-        # # predict
+
+        # predict
         # lgb_testing_results = gbm.predict(testing_features, num_iteration=gbm.best_iteration)
         # lgb_test_pred = gbm.predict(test_x)
         #
         # lgb_per = 0.4
 
         ############## end lgb ##########################
-
 
 
         #预测异常值
@@ -241,6 +232,7 @@ def main():
         if len(cv_high_results) != 0 and len(cv_pred_high_list) != 0:
             for ii, jj in enumerate(cv_pred_high_list):
                 testing_results[jj] = cv_high_results[ii]
+                print(ii, testing_results[jj])
 
         result_mean += np.round(mean_squared_error(testing_target, testing_results), 5)
         print('CV_ROUND (', i, ') mse -> ', np.round(mean_squared_error(testing_target, testing_results), 5) / 2)
@@ -251,13 +243,10 @@ def main():
         i += 1
     results = test_preds.mean(axis=1)
 
-
     #修改异常值
     for index in outlier:
         print(index, outlier[index])
-        results[index] = max(outlier[index])
-
-
+        results[index] = np.mean(outlier[index])
 
     # 线下CV
     result_mean /= N
@@ -268,7 +257,7 @@ def main():
     #ouput.to_csv("../result/1.25-WQX-PolyFeatures.csv", header=None, index=False, encoding="utf-8")
     # ouput.to_csv(r'../result/test{}.csv'.format(datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
     #            header=None,index=False, float_format='%.4f')
-    save(ouput, 'xgb_class_DaPaiCHong')
+    # save(ouput, 'xgb_class')
     print(ouput.describe())
     print(ouput.loc[ouput[0] > 8])
 

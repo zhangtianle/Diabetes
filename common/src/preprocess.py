@@ -2,7 +2,8 @@ from Feature import Feature
 from util import read_data, save_data
 import pandas as pd
 
-total, target, train_id, test_id, total_ID = read_data()
+# test_tpye = 'A' OR 'B'
+total, target, train_id, test_id, total_ID = read_data(test_type='B')
 
 feature = Feature(total)
 feature.week_day()
@@ -12,20 +13,24 @@ feature.fix_missing()
 feature.long_tail()
 feature.statistics()
 feature.combine_feature()
-# feature.drop_feature(['尿素std', '红细胞平均血红蛋白浓度std', '红细胞平均血红蛋白浓度avg', '甘油三酯avg', '乙肝核心抗体'])
+#feature.drop_feature(['尿素std', '红细胞平均血红蛋白浓度std', '红细胞平均血红蛋白浓度avg', '甘油三酯avg', '乙肝核心抗体'])
 feature.one_hot(['gender'])
 total = feature.get_train()
 
-#读取多项式特征
-poly = pd.read_csv("../data/poly_feature/poly_feature _90.csv")
+######## start 读取多项式特征 ######
+# poly = pd.read_csv("../data/poly_feature/poly_feature _90.csv")
+# poly = pd.read_csv("../data/poly_feature/poly_feature_B_50.csv")
+poly = pd.read_csv("../data/poly_feature/poly_feature_train_A_10.csv")
+# poly_chong = pd.read_csv("../data/poly_feature/feature.csv")
 poly = poly.iloc[:,0:4]
+# poly_chong = poly_chong.iloc[:, 26:93]
 
 poly = poly.reset_index(drop=True)
+# poly_chong = poly_chong.reset_index(drop=True)
 total = total.reset_index(drop=True)
 
-
-
 total = pd.concat([total,poly],axis=1)
+########  end 多项式特征  ########
 
 train = total[0:len(train_id)]
 train = pd.concat([train_id, train, target], axis=1)
